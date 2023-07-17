@@ -62,8 +62,8 @@ passport.deserializeUser(function(user, done) {
 
 // Setting up OAuth with Google API to get the user info
 passport.use(new GoogleStrategy({
-    clientID: process.env.CLIENT_ID,
-    clientSecret: process.env.CLIENT_SECRET,
+    clientID: process.env.GOOGLE_ID,
+    clientSecret: process.env.GOOGLE_SECRET,
     callbackURL: "http://localhost:3000/auth/google/secrets",
     usrProfileURL: 'https://www.googleapis.com/oauth2/v3/userinfo',
     passReqToCallback: true
@@ -228,10 +228,14 @@ app.get('/auth/google/secrets',
 const start = async () => {
     try {
 
-        await mongoose.connect('mongodb://127.0.0.1:27017/userDB');
-        app.listen(3000, () => {
-            console.log('Listening on 3000');
-        });
+        const connect = await mongoose.connect(`mongodb+srv://admin-wal:${process.env.PASSWORD}@cluster0.xhjmdky.mongodb.net/?retryWrites=true&w=majority`);
+        if (connect) {
+            app.listen(process.env.PORT || 3000, () => {
+                console.log('Listening on 3000');
+            });
+        } else {
+            console.log(connect);
+        }
     } catch (err) {
 
         console.error(err);
