@@ -130,6 +130,7 @@ app.post('/register', async (req, res) => {
 
     } catch (error) {
         console.log(error);
+        res.redirect("/register")
     }
 });
 
@@ -172,7 +173,10 @@ app.get('/logout', async (req, res) => {
 app.get('/submit', async (req, res) => {
 
     if (req.isAuthenticated()) {
-        res.render('submit');
+    const user = await User.findById({ _id: req.user._id })
+      res.render('submit', {
+        user: user 
+      });
     } else {
         res.redirect('/login');
     }
