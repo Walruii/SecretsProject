@@ -10,6 +10,7 @@ const passportLocalMongoose = require('passport-local-mongoose');
 const findOrCreate = require('mongoose-findorcreate');
 const GoogleStrategy = require('passport-google-oauth2').Strategy;
 const FacebookStrategy = require('passport-facebook').Strategy;
+const PORT = process.env.PORT || 3000;
 
 // Setting the view engine to ejs that takes .html extention
 app.engine('.html', require('ejs').__express);
@@ -161,14 +162,11 @@ app.post('/login', async (req, res) => {
 
 // Setting up the logout that will remove the session of the login from the 
 // browser and the user will be no longer logged in
-app.get('/logout', async (req, res) => {
 
-    req.logout((err) => {
-        if (err) { console.log(err); }
-        res.redirect('/');
-    });
+app.get('/logout', (req, res) => {
+    req.logout();  // This logs out the user
+    res.redirect('/');
 });
-
 
 app.get('/submit', async (req, res) => {
 
@@ -184,28 +182,25 @@ app.get('/submit', async (req, res) => {
 });
 
 app.post('/submit', async (req, res) => {
-
     const submittedSecret = req.body.secret;
+
     try {
+        const user = await User.findById(req.user._id);
 
-        const user = await User.findById({ _id: req.user._id });
         if (!user) {
-            console.log(user);
-        } else {
-            user.secret = submittedSecret;
-            try {
-                await user.save();
-                res.redirect('/secrets');
-            } catch (error) {
-                console.log(error);
-            }
+            console.log("User not found");
+            res.status(404).send("User not found");
+            return;
         }
+
+        user.secret = submittedSecret;
+        await user.save();
+        res.redirect('/secrets');
     } catch (error) {
-        console.log(error);
+        console.error("Error:", error.message);
+        res.status(500).send("An error occurred");
     }
-
 });
-
 
 // Routing the facebook and google authentication that if successful will
 // provide us will the ids or will shout unauthorized
@@ -228,23 +223,23 @@ app.get('/auth/google/secrets',
         failureRedirect: '/login'
     }));
 
-// Starting the server with local host and listening to port 3000
-const start = async () => {
+// Set up routes and middleware here
+
+const startServer = async () => {
     try {
-
-        const connect = await mongoose.connect(`mongodb+srv://admin-wal:${process.env.PASSWORD}@cluster0.xhjmdky.mongodb.net/?retryWrites=true&w=majority`);
-        if (connect) {
-            app.listen(process.env.PORT || 3000, () => {
-                console.log('Listening on 3000');
-            });
-        } else {
-            console.log(connect);
-        }
-    } catch (err) {
-
-        console.error(err);
+        await mongoose.connect(process.env.MONGO_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        });
+        console.log('Connected to MongoDB');
+        
+        app.listen(PORT, () => {
+            console.log(`Server is running on port ${PORT}`);
+        });
+    } catch (error) {
+        console.error('Error connecting to MongoDB:', error.message);
         process.exit(1);
     }
-}
+};
 
-start();
+startServer();
