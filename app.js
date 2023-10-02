@@ -24,9 +24,9 @@ app.use(express.static('public'));
 
 // Setting up sessions with express that store user login
 app.use(session({
-    secret: "lilSecret",
-    resave: false,
-    saveUninitialized: false
+  secret: "lilSecret",
+  resave: false,
+  saveUninitialized: false
 }));
 
 app.use(passport.initialize());
@@ -35,11 +35,11 @@ app.use(passport.session());
 // Setting up the Schema for the users that will store the email,
 // password, secrets and optionally the googleId or the FacebookId
 const userSchema = new mongoose.Schema({
-    username: String,
-    password: String,
-    googleId: String,
-    facebookId: String,
-    secret: String
+  username: String,
+  password: String,
+  googleId: String,
+  facebookId: String,
+  secret: String
 });
 
 // Setting up plugins for mongodb to work with mongoose passport local and
@@ -53,62 +53,62 @@ passport.use(User.createStrategy());
 
 // Serializing and Deserializing user to save the login and log them out
 passport.serializeUser(function(user, done) {
-    done(null, user);
+  done(null, user);
 });
 
 passport.deserializeUser(function(user, done) {
-    done(null, user);
+  done(null, user);
 });
 
 
 // Setting up OAuth with Google API to get the user info
 passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_ID,
-    clientSecret: process.env.GOOGLE_SECRET,
-    callbackURL: "http://localhost:3000/auth/google/secrets",
-    usrProfileURL: 'https://www.googleapis.com/oauth2/v3/userinfo',
-    passReqToCallback: true
+  clientID: process.env.GOOGLE_ID,
+  clientSecret: process.env.GOOGLE_SECRET,
+  callbackURL: "http://localhost:3000/auth/google/secrets",
+  usrProfileURL: 'https://www.googleapis.com/oauth2/v3/userinfo',
+  passReqToCallback: true
 },
-    function(request, accessToken, refreshToken, profile, done) {
-        User.findOrCreate({ googleId: profile.id }, function(err, user) {
-            return done(err, user);
-        });
-    }
+  function(request, accessToken, refreshToken, profile, done) {
+    User.findOrCreate({ googleId: profile.id }, function(err, user) {
+      return done(err, user);
+    });
+  }
 ));
 
 // Setting up OAuth with Facebook API to get the user info
 passport.use(new FacebookStrategy({
-    clientID: process.env.FACEBOOK_APP_ID,
-    clientSecret: process.env.FACEBOOK_APP_SECRET,
-    callbackURL: "http://localhost:3000/auth/facebook/callback"
+  clientID: process.env.FACEBOOK_APP_ID,
+  clientSecret: process.env.FACEBOOK_APP_SECRET,
+  callbackURL: "http://localhost:3000/auth/facebook/callback"
 },
-    function(accessToken, refreshToken, profile, cb) {
-        User.findOrCreate({ facebookId: profile.id }, function(err, user) {
-            return cb(err, user);
-        });
-    }
+  function(accessToken, refreshToken, profile, cb) {
+    User.findOrCreate({ facebookId: profile.id }, function(err, user) {
+      return cb(err, user);
+    });
+  }
 ));
 
 // Creating routes for home and about me page
 app.get('/', async (req, res) => {
 
-    res.render('home');
+  res.render('home');
 });
 
 
 app.get('/about', async (req, res) => {
 
-    res.render('about');
+  res.render('about');
 });
 
 
 // Setting up the secrets page that will display the secrets 
 app.get('/secrets', async (req, res) => {
 
-    const users = await User.find({ 'secret': { $ne: null } });
-    if (users) {
-        res.render('secrets', { userss: users });
-    }
+  const users = await User.find({ 'secret': { $ne: null } });
+  if (users) {
+    res.render('secrets', { userss: users });
+  }
 
 });
 
@@ -116,23 +116,23 @@ app.get('/secrets', async (req, res) => {
 // Setting up the local registering method the hashs the password and salts it
 app.get('/register', async (req, res) => {
 
-    res.render('register');
+  res.render('register');
 })
 
 app.post('/register', async (req, res) => {
 
-    try {
-        const register = await User.register({ username: req.body.username }, req.body.password);
-        if (!register) {
-            console.log(register);
-        } else {
-            passport.authenticate('local')(req, res, () => res.redirect('/secrets'));
-        }
-
-    } catch (error) {
-        console.log(error);
-        res.redirect("/register")
+  try {
+    const register = await User.register({ username: req.body.username }, req.body.password);
+    if (!register) {
+      console.log(register);
+    } else {
+      passport.authenticate('local')(req, res, () => res.redirect('/secrets'));
     }
+
+  } catch (error) {
+    console.log(error);
+    res.redirect("/register")
+  }
 });
 
 
@@ -140,23 +140,23 @@ app.post('/register', async (req, res) => {
 // same way and check it against the stored password
 app.get('/login', async (req, res) => {
 
-    res.render('login');
+  res.render('login');
 })
 
 app.post('/login', async (req, res) => {
 
-    const user = new User({
-        username: req.body.username,
-        passport: req.body.password
-    })
+  const user = new User({
+    username: req.body.username,
+    passport: req.body.password
+  })
 
-    req.login(user, (err) => {
-        if (err) {
-            console.log(err);
-        } else {
-            passport.authenticate('local', { failureRedirect: '/', failureMessage: true })(req, res, () => res.redirect('/secrets'));
-        }
-    });
+  req.login(user, (err) => {
+    if (err) {
+      console.log(err);
+    } else {
+      passport.authenticate('local', { failureRedirect: '/', failureMessage: true })(req, res, () => res.redirect('/secrets'));
+    }
+  });
 });
 
 
@@ -164,42 +164,44 @@ app.post('/login', async (req, res) => {
 // browser and the user will be no longer logged in
 
 app.get('/logout', (req, res) => {
-    req.logout();  // This logs out the user
+  req.logout((err) => {
+    if (err) { console.log(err) }
     res.redirect('/');
+  });  // This logs out the user
 });
 
 app.get('/submit', async (req, res) => {
 
-    if (req.isAuthenticated()) {
+  if (req.isAuthenticated()) {
     const user = await User.findById({ _id: req.user._id })
-      res.render('submit', {
-        user: user 
-      });
-    } else {
-        res.redirect('/login');
-    }
+    res.render('submit', {
+      user: user
+    });
+  } else {
+    res.redirect('/login');
+  }
 
 });
 
 app.post('/submit', async (req, res) => {
-    const submittedSecret = req.body.secret;
+  const submittedSecret = req.body.secret;
 
-    try {
-        const user = await User.findById(req.user._id);
+  try {
+    const user = await User.findById(req.user._id);
 
-        if (!user) {
-            console.log("User not found");
-            res.status(404).send("User not found");
-            return;
-        }
-
-        user.secret = submittedSecret;
-        await user.save();
-        res.redirect('/secrets');
-    } catch (error) {
-        console.error("Error:", error.message);
-        res.status(500).send("An error occurred");
+    if (!user) {
+      console.log("User not found");
+      res.status(404).send("User not found");
+      return;
     }
+
+    user.secret = submittedSecret;
+    await user.save();
+    res.redirect('/secrets');
+  } catch (error) {
+    console.error("Error:", error.message);
+    res.status(500).send("An error occurred");
+  }
 });
 
 // Routing the facebook and google authentication that if successful will
@@ -208,38 +210,38 @@ app.get('/auth/facebook', passport.authorize('facebook'));
 
 app.get('/auth/facebook/callback',
 
-    passport.authenticate('facebook', {
-        successRedirect: '/secrets',
-        failureRedirect: '/login'
-    }));
+  passport.authenticate('facebook', {
+    successRedirect: '/secrets',
+    failureRedirect: '/login'
+  }));
 
 
 app.get('/auth/google', passport.authorize('google', { scope: ['profile'] }));
 
 app.get('/auth/google/secrets',
 
-    passport.authenticate('google', {
-        successRedirect: '/secrets',
-        failureRedirect: '/login'
-    }));
+  passport.authenticate('google', {
+    successRedirect: '/secrets',
+    failureRedirect: '/login'
+  }));
 
 // Set up routes and middleware here
 
 const startServer = async () => {
-    try {
-        await mongoose.connect(process.env.MONGO_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        });
-        console.log('Connected to MongoDB');
-        
-        app.listen(PORT, () => {
-            console.log(`Server is running on port ${PORT}`);
-        });
-    } catch (error) {
-        console.error('Error connecting to MongoDB:', error.message);
-        process.exit(1);
-    }
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log('Connected to MongoDB');
+
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Error connecting to MongoDB:', error.message);
+    process.exit(1);
+  }
 };
 
 startServer();
